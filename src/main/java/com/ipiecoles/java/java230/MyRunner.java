@@ -3,8 +3,11 @@ package com.ipiecoles.java.java230;
 import com.ipiecoles.java.java230.exceptions.BatchException;
 import com.ipiecoles.java.java230.model.Commercial;
 import com.ipiecoles.java.java230.model.Employe;
+import com.ipiecoles.java.java230.model.Manager;
+import com.ipiecoles.java.java230.model.Technicien;
 import com.ipiecoles.java.java230.repository.EmployeRepository;
 import com.ipiecoles.java.java230.repository.ManagerRepository;
+import org.joda.time.LocalDate;
 import org.joda.time.format.DateTimeFormat;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -27,10 +30,14 @@ public class MyRunner implements CommandLineRunner {
     private static final String REGEX_MATRICULE = "^[MTC][0-9]{5}$";
     private static final String REGEX_NOM = "^[\\p{L}- ]*$";
     private static final String REGEX_PRENOM = "^[\\p{L}- ]*$";
+    private static final String REGEX_SALAIRE = "[0-9]*.[0-9]";
     private static final int NB_CHAMPS_MANAGER = 5;
     private static final int NB_CHAMPS_TECHNICIEN = 7;
     private static final String REGEX_MATRICULE_MANAGER = "^M[0-9]{5}$";
     private static final int NB_CHAMPS_COMMERCIAL = 7;
+    private static final String REGEX_PERF = "[0-9]*";
+    private static final String REGEX_CA = "[0-9]*";
+    private static final String REGEX_GRADE = "[0-9]*";
 
     @Autowired
     private EmployeRepository employeRepository;
@@ -110,19 +117,38 @@ public class MyRunner implements CommandLineRunner {
     private void processCommercial(String ligneCommercial) throws BatchException {
         //TODO
         String[] commercialFields = ligneCommercial.split(",");
+        if (commercialFields.length != 7){
+            throw new BatchException("la ligne commercial ne contient pas 7 éléments mais " + commercialFields.length);
+        }
+
         //Contrôle le matricule
+
         if (!commercialFields[0].matches(REGEX_MATRICULE)){
             throw new BatchException("la chaîne C12 ne respecte pas l'expression régulière");
-        }else {
-            Commercial c = new Commercial();
-            employes.add(c);}
-//        DateTimeFormat.forPattern("dd/MM/yyyy").parseLocalDate()
+        }
         if (!commercialFields[1].matches(REGEX_NOM)){
-            throw new BatchException("la chaîne C12 ne respecte pas l'expression régulière");
+            throw new BatchException("la chaîne de caractère n'est pas un nom");
         }
         if (!commercialFields[2].matches(REGEX_PRENOM)){
             throw new BatchException("la chaîne de caractère n'est pas un prénom");
         }
+        try {
+           LocalDate date = (DateTimeFormat.forPattern("dd/MM/yyyy").parseLocalDate(commercialFields[3]));
+        }catch(Exception e){
+            throw new BatchException("Le format de date est incorrect");
+        }
+        if (!commercialFields[4].matches(REGEX_SALAIRE)){
+            throw new BatchException("Le salaire indiqué n'est pas valide");
+        }
+        if (!commercialFields[6].matches(REGEX_PERF)){
+            throw new BatchException("le chiffre représentant la perf n'est pas valide ");
+        }
+        if (!commercialFields[5].matches(REGEX_CA)){
+            throw new BatchException("le chiffre représentant le chiffre d'affaire n'est pas valide ");
+        }
+        Commercial c = new Commercial();
+        employes.add(c);
+
 
     }
 
@@ -133,6 +159,22 @@ public class MyRunner implements CommandLineRunner {
      */
     private void processManager(String ligneManager) throws BatchException {
         //TODO
+        String[] managerField = ligneManager.split(",");
+        if (managerField.length != 5){
+            throw new BatchException("La ligne manager ne contient pas 5 éléments mais " + managerField.length);
+        }
+        //Contrôle le matricule
+        if (!managerField[0].matches(REGEX_MATRICULE)){
+            throw new BatchException("la chaîne C12 ne respecte pas l'expression régulière");
+        }
+        if (!managerField[1].matches(REGEX_NOM)){
+            throw new BatchException("la chaîne de caractère n'est pas un nom");
+        }
+        if (!managerField[2].matches(REGEX_PRENOM)){
+            throw new BatchException("la chaîne de caractère n'est pas un prénom");
+        }
+        Manager m= new Manager();
+        employes.add(m);
     }
 
     /**
@@ -142,6 +184,33 @@ public class MyRunner implements CommandLineRunner {
      */
     private void processTechnicien(String ligneTechnicien) throws BatchException {
         //TODO
+        String[] technicienField = ligneTechnicien.split(",");
+
+        if (technicienField.length != 7){
+            throw new BatchException("la ligne commercial ne contient pas 7 éléments mais " + technicienField.length);
+        }
+        //Contrôle le matricule
+        if (!technicienField[0].matches(REGEX_MATRICULE)){
+            throw new BatchException("la chaîne C12 ne respecte pas l'expression régulière");
+        }
+        if (!technicienField[1].matches(REGEX_NOM)){
+            throw new BatchException("la chaîne de caractère n'est pas un nom");
+        }
+        if (!technicienField[2].matches(REGEX_PRENOM)){
+            throw new BatchException("la chaîne de caractère n'est pas un prénom");
+        }
+        try {
+            Integer.parseInt(technicienField[5]);
+        }catch (Exception e){
+            throw new BatchException("le grade du technicien est incorrect");
+        }
+
+        if (!technicienField[5].matches(REGEX_GRADE)){
+            throw new BatchException("le grade doit etre un chiffre entre 1 et 9");
+        }
+
+        Technicien t = new Technicien();
+        employes.add(t);
     }
 
 }
