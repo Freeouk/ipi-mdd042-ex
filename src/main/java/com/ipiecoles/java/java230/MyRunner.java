@@ -32,13 +32,14 @@ public class MyRunner implements CommandLineRunner {
     private static final String REGEX_NOM = "^[\\p{L}- ]*$";
     private static final String REGEX_PRENOM = "^[\\p{L}- ]*$";
     private static final String REGEX_SALAIRE = "[0-9]*.[0-9]";
-    private static final int NB_CHAMPS_MANAGER = 5;
-    private static final int NB_CHAMPS_TECHNICIEN = 7;
+//    Non utilisé car je me sers de .lenght
+//    private static final int NB_CHAMPS_MANAGER = 5;
+//    private static final int NB_CHAMPS_TECHNICIEN = 7;
+//    private static final int NB_CHAMPS_COMMERCIAL = 7;
     private static final String REGEX_MATRICULE_MANAGER = "^M[0-9]{5}$";
-    private static final int NB_CHAMPS_COMMERCIAL = 7;
+
     private static final String REGEX_PERF = "[0-9]*";
     private static final String REGEX_CA = "[0-9]*";
-    private static final String REGEX_GRADE = "[0-9]*";
 
     @Autowired
     private EmployeRepository employeRepository;
@@ -115,37 +116,11 @@ public class MyRunner implements CommandLineRunner {
      */
     private void processCommercial(String ligneCommercial) throws BatchException {
         //Contrôle la taille de la ligne rentrée
-
         String[] commercialFields = ligneCommercial.split(",");
         if (commercialFields.length != 7){
             throw new BatchException("la ligne commercial ne contient pas 7 éléments mais " + commercialFields.length);
         }
 
-        //Contrôle le matricule
-
-        if (!commercialFields[0].matches(REGEX_MATRICULE)){
-            throw new BatchException("la chaîne C12 ne respecte pas l'expression régulière");
-        }
-        if (!commercialFields[1].matches(REGEX_NOM)){
-            throw new BatchException("la chaîne de caractère n'est pas un nom");
-        }
-        if (!commercialFields[2].matches(REGEX_PRENOM)){
-            throw new BatchException("la chaîne de caractère n'est pas un prénom");
-        }
-
-        LocalDate date;
-        try {
-            date = (DateTimeFormat.forPattern("dd/MM/yyyy").parseLocalDate(commercialFields[3]));
-        }catch(Exception e){
-            throw new BatchException("Le format de date est incorrect");
-        }
-        Double salaire;
-        try {
-            salaire = Double.parseDouble(commercialFields[4]);
-        }
-        catch (Exception e){
-            throw new BatchException("Le salaire indiqué n'est pas valide");
-        }
         Double ca;
         try {
             ca = Double.parseDouble(commercialFields[5]);
@@ -168,13 +143,10 @@ public class MyRunner implements CommandLineRunner {
         }
 
         Commercial c = new Commercial();
-        c.setMatricule(commercialFields[0]);
-        c.setNom(commercialFields[1]);
-        c.setPrenom(commercialFields[2]);
-        c.setDateEmbauche(date);
-        c.setSalaire(salaire);
+
         c.setCaAnnuel(ca);
         c.setPerformance(perf);
+        infosEmmploye(c, commercialFields);
         employes.add(c);
 
 
@@ -186,47 +158,15 @@ public class MyRunner implements CommandLineRunner {
      * @throws BatchException s'il y a un problème sur cette ligne
      */
     private void processManager(String ligneManager) throws BatchException {
-        //TODO
+
         String[] managerField = ligneManager.split(",");
         if (managerField.length != 5){
             throw new BatchException("La ligne manager ne contient pas 5 éléments mais " + managerField.length);
         }
-        //Contrôle le matricule
-        if (!managerField[0].matches(REGEX_MATRICULE)){
-            throw new BatchException("la chaîne C12 ne respecte pas l'expression régulière");
-        }
-        if (!managerField[1].matches(REGEX_NOM)){
-            throw new BatchException("la chaîne de caractère n'est pas un nom");
-        }
-        if (!managerField[2].matches(REGEX_PRENOM)){
-            throw new BatchException("la chaîne de caractère n'est pas un prénom");
-        }
-
-        Double salaire;
-        try {
-            salaire = Double.parseDouble(managerField[4]);
-        }
-        catch (Exception e){
-            throw new BatchException("Le salaire indiqué n'est pas valide");
-        }
-
-        if (!managerField[4].matches(REGEX_SALAIRE)){
-            throw new BatchException("Le salaire indiqué n'est pas valide");
-        }
-
-        LocalDate date;
-        try {
-            date = (DateTimeFormat.forPattern("dd/MM/yyyy").parseLocalDate(managerField[3]));
-        }catch(Exception e){
-            throw new BatchException("Le format de date est incorrect");
-        }
 
         Manager m= new Manager();
-        m.setMatricule(managerField[0]);
-        m.setNom(managerField[0]);
-        m.setPrenom(managerField[0]);
-        m.setDateEmbauche(date);
-        m.setSalaire(salaire);
+
+        infosEmmploye(m, managerField);
         employes.add(m);
     }
 
@@ -243,40 +183,14 @@ public class MyRunner implements CommandLineRunner {
             throw new BatchException("la ligne commercial ne contient pas 7 éléments mais " + technicienField.length);
         }
         //Contrôle le matricule
-        if (!technicienField[0].matches(REGEX_MATRICULE)){
-            throw new BatchException("la chaîne C12 ne respecte pas l'expression régulière");
-        }
-        if (!technicienField[1].matches(REGEX_NOM)){
-            throw new BatchException("la chaîne de caractère n'est pas un nom");
-        }
-        if (!technicienField[2].matches(REGEX_PRENOM)){
-            throw new BatchException("la chaîne de caractère n'est pas un prénom");
-        }
+
         try {
             Integer.parseInt(technicienField[5]);
         }catch (Exception e){
             throw new BatchException("le grade du technicien est incorrect");
         }
 
-
-        LocalDate date;
-        try {
-            date = (DateTimeFormat.forPattern("dd/MM/yyyy").parseLocalDate(technicienField[3]));
-        }catch(Exception e){
-            throw new BatchException("Le format de date est incorrect");
-        }
-
-        Double salaire;
-        try {
-            salaire = Double.parseDouble(technicienField[4]);
-        }
-        catch (Exception e){
-            throw new BatchException("Le salaire indiqué n'est pas valide");
-        }
-
-        if (!technicienField[4].matches(REGEX_SALAIRE)){
-            throw new BatchException("Le salaire indiqué n'est pas valide");
-        }
+        // Contrôle sur la date
 
         Integer grade;
         try {
@@ -303,18 +217,61 @@ public class MyRunner implements CommandLineRunner {
 
 
         Technicien t = new Technicien();
-        t.setMatricule(technicienField[0]);
-        t.setNom(technicienField[1]);
-        t.setPrenom(technicienField[2]);
-        t.setDateEmbauche(date);
+
         try {
             t.setGrade(grade);
         } catch (TechnicienException e) {
             throw new BatchException("le grade doit être un chiffre");
         }
-        t.setSalaire(salaire);
+
+        infosEmmploye(t, technicienField);
         t.setManager(manager);
         employes.add(t);
     }
+
+    /**
+     * Fonction pour facotriser le code appeler a  chaque fois que je dois faire un controle.
+     *
+     * @param employe
+     * @param employeFields
+     * @return
+     * @throws BatchException
+     */
+    private Employe infosEmmploye (Employe employe, String[] employeFields) throws BatchException{
+
+        if (!employeFields[0].matches(REGEX_MATRICULE)){
+            throw new BatchException("la chaîne C12 ne respecte pas l'expression régulière");
+        }
+        if (!employeFields[1].matches(REGEX_NOM)){
+            throw new BatchException("la chaîne de caractère n'est pas un nom");
+        }
+        if (!employeFields[2].matches(REGEX_PRENOM)){
+            throw new BatchException("la chaîne de caractère n'est pas un prénom");
+        }
+
+        LocalDate date;
+        try {
+            date = (DateTimeFormat.forPattern("dd/MM/yyyy").parseLocalDate(employeFields[3]));
+        }catch(Exception e){
+            throw new BatchException("Le format de date est incorrect");
+        }
+
+        Double salaire;
+        try {
+            salaire = Double.parseDouble(employeFields[4]);
+        }
+        catch (Exception e){
+            throw new BatchException("Le salaire indiqué n'est pas valide");
+        }
+        employe.setMatricule(employeFields[0]);
+        employe.setNom(employeFields[1]);
+        employe.setPrenom(employeFields[2]);
+        employe.setDateEmbauche(date);
+        employe.setSalaire(salaire);
+
+        return employe;
+
+    }
+
 
 }
